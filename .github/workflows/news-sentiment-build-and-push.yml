@@ -48,7 +48,7 @@ jobs:
       - name: Deploy container app
         uses: azure/container-apps-deploy-action@v2
         with:
-          containerAppName: lookup
+          containerAppName: news-sentiment
           resourceGroup: group9
           registryUrl: ghcr.io
           registryUsername: ${{ secrets.LOOKUP_REGISTRY_USERNAME }}
