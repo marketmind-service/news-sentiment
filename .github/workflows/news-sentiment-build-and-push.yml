@@ -49,7 +49,7 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           containerAppName: news-sentiment
-          resourceGroup: group9
+          resourceGroup: marketmind
           registryUrl: ghcr.io
           registryUsername: ${{ secrets.NEWSSENTIMENT_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.NEWSSENTIMENT_REGISTRY_PASSWORD }}
