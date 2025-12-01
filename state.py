@@ -15,6 +15,7 @@ class AgentState(BaseModel):
 class NewsState(BaseModel):
     prompt: Optional[str] = None
     company: Optional[str] = None
+    symbol: Optional[str] = None
     items: Optional[int] = None
     rows: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None
