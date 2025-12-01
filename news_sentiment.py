@@ -383,7 +383,7 @@ def fetch_sentiment_rows(query: str, limit: int = 20, use_body: bool = False):
 
 if __name__ == "__main__":
     try:
-        news_sentiment()
+        main()
     except KeyboardInterrupt:
         sys.exit(130)
     except Exception as e:
