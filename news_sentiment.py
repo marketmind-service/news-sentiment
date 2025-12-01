@@ -1,12 +1,10 @@
-#!/usr/bin/env python3
-# news_sentiment.py
-
 import sys
 import re
 import time
 from typing import Optional, Tuple, Dict, Any, List
 from datetime import datetime
 from urllib.parse import quote_plus
+from state import NewsState
 
 import requests
 import feedparser
@@ -15,19 +13,19 @@ import yfinance as yf
 # Sentiment that ships its own lexicon
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-# Optional helpers
 try:
     from yahooquery import search as yq_search
+
     HAVE_YQ = True
 except Exception:
     HAVE_YQ = False
 
 try:
     from newspaper import Article
+
     HAVE_NEWS = True
 except Exception:
     HAVE_NEWS = False
-
 
 UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -44,13 +42,6 @@ def is_likely_ticker(q: str) -> bool:
 
 
 def resolve_symbol_and_name(query: str) -> Tuple[str, Optional[str]]:
-    """
-    Best-effort resolver.
-    1) If it looks like a ticker, try it directly with yfinance.
-    2) Else, if yahooquery is available, search and pick the top EQUITY.
-    3) Else, fall back to the raw query as a ticker and let news search handle it.
-    Returns (symbol, company_name or None).
-    """
     q = query.strip()
 
     def yf_name(sym: str) -> Optional[str]:
@@ -271,7 +262,7 @@ def print_summary(rows: List[Dict[str, Any]], symbol: str, name: Optional[str], 
         return
     comps = [r["compound"] for r in rows]
     avg = sum(comps) / len(comps)
-    med = sorted(comps)[len(comps)//2] if comps else 0.0
+    med = sorted(comps)[len(comps) // 2] if comps else 0.0
     pos = sum(1 for r in rows if r["label"] == "pos")
     neu = sum(1 for r in rows if r["label"] == "neu")
     neg = sum(1 for r in rows if r["label"] == "neg")
@@ -292,8 +283,52 @@ def print_ranked(rows: List[Dict[str, Any]], limit: int):
     print("")
 
 
+def news_sentiment(state: NewsState) -> NewsState:
+    print("News & Sentiment")
+
+    company = state.company
+    if not company:
+        print("No company provided in state. Exiting news-sentiment node.")
+        return state.model_copy(update={
+            "error": "[news_sentiment.py] No company provided. Exiting news-sentiment node.",
+        })
+
+    try:
+        limit = max(1, int(state.items)) if state.items is not None else 20
+    except Exception:
+        limit = 20
+
+    use_body = False
+
+    symbol, name = resolve_symbol_and_name(company)
+
+    items: List[Dict[str, Any]] = []
+    items.extend(rss_google_news(symbol, name))
+    if not items:
+        items.extend(rss_bing_news(symbol, name))
+    if not items:
+        items.extend(rss_yahoo_finance(symbol))
+    if not items:
+        items.extend(yf_property_news(symbol))
+
+    items = dedup_and_sort(items)[:limit]
+
+    rows = sentiment_rows(items, use_article_body=use_body)
+
+    print_summary(rows, symbol, name, used_body=use_body)
+    print_ranked(rows, limit=min(12, limit))
+    print("Done.")
+
+    return state.model_copy(update={
+        "company": name or company,
+        "items": len(rows),
+        "symbol": symbol,
+        "rows": rows,
+        "error": None,
+    })
+
+
 def main():
-    print("Stock News + Sentiment")
     query = input("Ticker or company: ").strip()
     if not query:
         print("No query provided. Exiting.")
@@ -329,6 +364,7 @@ def main():
     print_ranked(rows, limit=min(12, limit))
     print("Done.")
 
+
 # --- UI-friendly helper for frontend ---
 def fetch_sentiment_rows(query: str, limit: int = 20, use_body: bool = False):
     symbol, name = resolve_symbol_and_name(query)
@@ -347,7 +383,7 @@ def fetch_sentiment_rows(query: str, limit: int = 20, use_body: bool = False):
 
 if __name__ == "__main__":
     try:
-        main()
+        news_sentiment()
     except KeyboardInterrupt:
         sys.exit(130)
     except Exception as e:

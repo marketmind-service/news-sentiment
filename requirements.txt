@@ -1,5 +1,9 @@
+langgraph
+langchain-core
+langchain-openai
 fastapi~=0.121.2
 requests~=2.32.5
+pydantic~=2.12.4
 feedparser~=6.0.12
 yfinance~=0.2.66
 vaderSentiment~=3.3.2
