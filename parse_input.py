@@ -4,7 +4,7 @@ import textwrap
 from typing import Optional, Tuple
 
 from langchain_core.messages import SystemMessage, HumanMessage
-from config import query
+from config import query, query2
 from state import NewsState
 
 
@@ -61,7 +61,7 @@ async def extract_company_and_items(prompt: str) -> Tuple[Optional[str], Optiona
         HumanMessage(content=f"Prompt: {prompt}")
     ]
 
-    response = query.invoke(messages)
+    response = query2.invoke(messages)
     raw = response.content if isinstance(response.content, str) else str(response.content)
 
     company: Optional[str] = None
