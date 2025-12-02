@@ -50,7 +50,7 @@ async def run_news(state: AgentState):
     return updated_state
 
 
-async def local_cli(state: AgentState):
+async def local_cli():
     print("MarketMind CLI (type 'exit' to quit)")
     while True:
         prompt = input("\nYou: ").strip()
