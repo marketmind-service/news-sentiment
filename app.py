@@ -65,7 +65,3 @@ async def local_cli():
             print("Error:", e)
 
 
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(local_cli())
